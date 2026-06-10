@@ -1,73 +1,114 @@
-# React + TypeScript + Vite
+# MyPathDops
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Field operations platform for telecom contractors.**  
+Guided photo capture, automated closeout packages, real-time job tracking — built for crews that work on towers.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What it does
 
-## React Compiler
+Telecom field crews lose time and money on documentation: photos get misnamed, closeout packages take hours to assemble, and the office has no visibility into what's happening on site. MyPathDops solves this with a two-layer platform — a web portal for managers and a mobile app for field technicians.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- Field techs follow a guided photo workflow — the app tells you what to shoot next, names the file automatically, and embeds GPS + timestamp
+- Managers see job status in real time without calling the crew
+- Closeout packages (COP) are assembled and exported to PDF in one click
+- Team certifications are tracked with automatic expiry alerts
+- Safety forms (JSA) are completed on-site before work begins
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Tech stack
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + TypeScript |
+| Build tool | Vite |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase Auth |
+| File storage | Supabase Storage |
+| PDF generation | react-pdf *(planned)* |
+| Mobile | Expo / React Native *(planned)* |
+| Deployment | Vercel *(planned)* |
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Current state (Phase 1 — in progress)
+
+- [x] Jobs list connected to live Supabase database
+- [x] Real-time data: add a job in Supabase → appears in the app instantly
+- [x] Status badges (Active / Completed / Pending) with color coding
+- [ ] Create job form (in progress)
+- [ ] Photo upload with auto-labeling
+- [ ] Fillable forms / documents
+- [ ] Closeout Package PDF generation
+- [ ] User authentication and roles
+
+---
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 18+
+- A [Supabase](https://supabase.com) account (free tier works)
+
+### Setup
+
+```bash
+git clone https://github.com/YOUR_USERNAME/mypathdops.git
+cd mypathdops
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Create a `src/supabaseClient.ts` file:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```typescript
+import { createClient } from '@supabase/supabase-js'
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+const SUPABASE_URL = 'your-project-url'
+const SUPABASE_KEY = 'your-anon-public-key'
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
 ```
+
+Create the `jobs` table in your Supabase project:
+
+```sql
+create table jobs (
+  id bigint generated always as identity primary key,
+  site_name text not null,
+  status text not null default 'Active',
+  date text
+);
+```
+
+Run the app:
+
+```bash
+npm run dev
+```
+
+---
+
+## Roadmap
+
+### Phase 1 — Web Portal (current)
+Core job management, photo upload, forms, COP PDF generation.
+
+### Phase 2 — Mobile App
+React Native field app with guided photo capture, offline mode, JSA completion.
+
+### Phase 3 — Differentiation
+AI photo verification, certification management, partner job sharing.
+
+---
+
+## Background
+
+MyPathDops is built as a direct alternative to [Pathwave](https://pathwave.com) — a niche field operations tool used by US telecom contractors. The author spent 5 years in telecom field work and experienced firsthand the pain of lost photos, manual PDF assembly, and zero office visibility.
+
+---
+
+## License
+
+MIT
