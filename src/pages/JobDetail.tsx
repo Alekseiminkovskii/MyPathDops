@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { PDFDownloadLink } from '@react-pdf/renderer'
+import { COPDocument } from '../components/COPDocument'
 
 type JobStatus = 'Active' | 'Completed' | 'Pending'
 
@@ -127,7 +129,23 @@ export function JobDetail() {
             display: 'flex', alignItems: 'center', gap: 6 }}>
           ← Back to Jobs
         </button>
-
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+  <PDFDownloadLink
+    document={<COPDocument job={job} photos={photos} />}
+    fileName={`COP_${job.site_name.replace(/\s+/g, '_')}.pdf`}
+  >
+    {({ loading }) => (
+      <button style={{
+        backgroundColor: '#1565c0', color: '#fff', border: 'none',
+        borderRadius: 8, padding: '10px 20px', fontSize: 14,
+        cursor: loading ? 'wait' : 'pointer',
+        opacity: loading ? 0.7 : 1,
+      }}>
+        {loading ? 'Generating PDF...' : '⬇ Download COP'}
+      </button>
+    )}
+  </PDFDownloadLink>
+</div>
         <div style={{ backgroundColor: '#fff', borderRadius: 10,
           padding: `24px ${S}px`, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           marginBottom: 12 }}>
