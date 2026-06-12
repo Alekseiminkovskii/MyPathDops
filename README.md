@@ -37,11 +37,11 @@ Telecom field crews lose time and money on documentation: photos get misnamed, c
 - [x] Jobs list connected to live Supabase database
 - [x] Real-time data: add a job in Supabase → appears in the app instantly
 - [x] Status badges (Active / Completed / Pending) with color coding
-- [ ] Create job form (in progress)
-- [ ] Photo upload with auto-labeling
-- [ ] Fillable forms / documents
-- [ ] Closeout Package PDF generation
-- [ ] User authentication and roles
+- [x] Create job form (in progress)
+- [x] Photo upload with auto-labeling
+- [x] Fillable forms / documents
+- [x] Closeout Package PDF generation
+- [x] User authentication and roles
 
 ---
 
