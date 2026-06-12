@@ -16,6 +16,9 @@ interface Photo {
   url: string
   label: string
   created_at: string
+  lat: number | null
+  lng: number | null
+  taken_at: string | null
 }
 
 const statusColors: Record<string, { bg: string; color: string }> = {
@@ -54,6 +57,24 @@ export function JobDetail() {
     if (!file) return
 
     setUploading(true)
+    const takenAt = new Date().toISOString()
+
+    let lat: number | null = null
+    let lng: number | null = null
+
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 5000,
+          enableHighAccuracy: true,
+        })
+      })
+      lat = position.coords.latitude
+      lng = position.coords.longitude
+    } catch {
+      console.warn('GPS недоступен — продолжаем без координат')
+    }
+
     const filename = `${id}/${Date.now()}_${file.name}`
 
     const { error: uploadError } = await supabase.storage
@@ -74,6 +95,9 @@ export function JobDetail() {
       job_id: Number(id),
       url: publicUrl,
       label: label || file.name,
+      lat,
+      lng,
+      taken_at: takenAt,
     }])
 
     setLabel('')
@@ -104,7 +128,6 @@ export function JobDetail() {
           ← Back to Jobs
         </button>
 
-        {/* Инфо о job */}
         <div style={{ backgroundColor: '#fff', borderRadius: 10,
           padding: `24px ${S}px`, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           marginBottom: 12 }}>
@@ -131,17 +154,15 @@ export function JobDetail() {
           </div>
         </div>
 
-        {/* Фото */}
         <div style={{ backgroundColor: '#fff', borderRadius: 10,
           padding: `24px ${S}px`, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           <h2 style={{ margin: '0 0 16px', fontSize: 15, fontWeight: 600, color: '#1a1a1a' }}>
             Photos ({photos.length})
           </h2>
 
-          {/* Upload */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
             <input
-              placeholder="Photo label (e.g. North face antenna)"
+              placeholder="Photo label (e.g. Alpha pos 1)"
               value={label}
               onChange={e => setLabel(e.target.value)}
               style={{ padding: '10px 14px', borderRadius: 8,
@@ -162,7 +183,6 @@ export function JobDetail() {
             )}
           </div>
 
-          {/* Список фото */}
           {photos.length === 0 ? (
             <div style={{ border: '2px dashed #e0e0e0', borderRadius: 8,
               padding: 32, textAlign: 'center', color: '#aaa', fontSize: 14 }}>
@@ -173,10 +193,21 @@ export function JobDetail() {
               {photos.map(photo => (
                 <div key={photo.id} style={{ borderRadius: 8, overflow: 'hidden',
                   border: '1px solid #e0e0e0' }}>
-                  <img src={photo.url} alt={photo.label}
-                    style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+                  <img
+                    src={photo.url}
+                    alt={photo.label}
+                    style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
+                  />
                   <div style={{ padding: '8px 10px', fontSize: 12, color: '#666' }}>
-                    {photo.label}
+                    <div style={{ fontWeight: 500, marginBottom: 2 }}>{photo.label}</div>
+                    {photo.taken_at && (
+                      <div>{new Date(photo.taken_at).toLocaleString()}</div>
+                    )}
+                    {photo.lat && photo.lng && (
+                      <div style={{ color: '#aaa' }}>
+                        {photo.lat.toFixed(5)}, {photo.lng.toFixed(5)}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
