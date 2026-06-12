@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
+import { Login } from './Login'
+import type { Session } from '@supabase/supabase-js'
 
 type JobStatus = 'Active' | 'Completed' | 'Pending'
 
@@ -17,17 +19,33 @@ const statusColors: Record<string, { bg: string; color: string }> = {
 }
 
 const emptyForm = { site_name: '', status: 'Active', date: '' }
-
-const S = 20 // единый отступ для всей страницы
+const S = 20
 
 function App() {
+  const [session, setSession] = useState<Session | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => { fetchJobs() }, [])
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      if (session) fetchJobs()
+      else setLoading(false)
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session)
+        if (session) fetchJobs()
+        else setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function fetchJobs() {
     const { data, error } = await supabase.from('jobs').select('*')
@@ -49,6 +67,7 @@ function App() {
     setSaving(false)
   }
 
+  if (!session) return <Login />
   if (loading) return <div style={{ padding: 40 }}>Loading...</div>
 
   return (
@@ -56,28 +75,34 @@ function App() {
       minHeight: '100vh',
       backgroundColor: '#f5f5f5',
       fontFamily: 'system-ui, sans-serif',
-      padding: `40px ${S}px`,   // ← один отступ слева для всей страницы
+      padding: `40px ${S}px`,
+      textAlign: 'left',
     }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
 
-        {/* Заголовок */}
         <div style={{ display: 'flex', justifyContent: 'space-between',
           alignItems: 'center', marginBottom: 8 }}>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: '#1a1a1a' }}>
             Jobs
           </h1>
-          <button onClick={() => setShowForm(!showForm)}
-            style={{ backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
-              borderRadius: 8, padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
-            {showForm ? 'Cancel' : '+ Add Job'}
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setShowForm(!showForm)}
+              style={{ backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
+                borderRadius: 8, padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
+              {showForm ? 'Cancel' : '+ Add Job'}
+            </button>
+            <button onClick={() => supabase.auth.signOut()}
+              style={{ backgroundColor: 'transparent', color: '#888', border: '1px solid #e0e0e0',
+                borderRadius: 8, padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
+              Sign out
+            </button>
+          </div>
         </div>
 
         <p style={{ margin: '0 0 24px', color: '#666', fontSize: 15 }}>
           {jobs.length} sites in queue
         </p>
 
-        {/* Форма */}
         {showForm && (
           <div style={{ backgroundColor: '#fff', borderRadius: 10,
             padding: `16px ${S}px`, marginBottom: 16,
@@ -112,7 +137,6 @@ function App() {
           </div>
         )}
 
-        {/* Список jobs */}
         <ul style={{ listStyle: 'none', margin: 0, padding: 0,
           display: 'flex', flexDirection: 'column', gap: 12 }}>
           {jobs.map((job) => {
@@ -121,7 +145,7 @@ function App() {
               <li key={job.id} style={{
                 backgroundColor: '#fff',
                 borderRadius: 10,
-                padding: `16px ${S}px`,   // ← тот же отступ S
+                padding: `16px ${S}px`,
                 boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                 display: 'flex',
                 alignItems: 'center',
@@ -129,13 +153,13 @@ function App() {
                 gap: 16,
               }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-  <span style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a' }}>
-    {job.site_name}
-  </span>
-  <span style={{ fontSize: 14, color: '#888' }}>
-    {job.date}
-  </span>
-</div>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a' }}>
+                    {job.site_name}
+                  </span>
+                  <span style={{ fontSize: 14, color: '#888' }}>
+                    {job.date}
+                  </span>
+                </div>
                 <span style={{ fontSize: 13, fontWeight: 500,
                   padding: '4px 12px', borderRadius: 20,
                   backgroundColor: badge.bg, color: badge.color,
