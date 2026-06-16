@@ -88,6 +88,17 @@ Run the app:
 npm run dev
 ```
 
+## Ecosystem
+
+This is the web portal — the back-office layer for managers.
+
+| Repository | Description |
+|---|---|
+| **MyPathDops** (this) | Web portal — React + TypeScript + AWS Amplify |
+| [MyPathDops-Mobile](https://github.com/Alekseiminkovskii/MyPathDops-Mobile) | Field mobile app — React Native + Expo |
+
+Both share the same Supabase backend.
+
 ---
 
 ## Roadmap
