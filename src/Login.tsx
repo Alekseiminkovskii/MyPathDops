@@ -1,23 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState,  } from 'react'
 import { supabase } from './supabaseClient'
 
 const REMEMBER_KEY = 'mypathdops_remember_email'
 
 export function Login() {
-  const [email, setEmail] = useState('')
+ const [email, setEmail] = useState(() => localStorage.getItem(REMEMBER_KEY) || '')
   const [password, setPassword] = useState('')
-  const [remember, setRemember] = useState(false)
+const [remember, setRemember] = useState(() => !!localStorage.getItem(REMEMBER_KEY))
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
 
-  useEffect(() => {
-    const saved = localStorage.getItem(REMEMBER_KEY)
-    if (saved) {
-      setEmail(saved)
-      setRemember(true)
-    }
-  }, [])
+
 
   async function handleSubmit() {
     if (!email || !password) return

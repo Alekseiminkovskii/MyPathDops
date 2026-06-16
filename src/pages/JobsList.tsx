@@ -74,6 +74,12 @@ export function JobsList() {
                 padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
               Sign out
             </button>
+            <button onClick={() => navigate('/certifications')}
+  style={{ backgroundColor: 'transparent', color: '#888',
+    border: '1px solid #e0e0e0', borderRadius: 8,
+    padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
+  Certifications
+</button>
           </div>
         </div>
 

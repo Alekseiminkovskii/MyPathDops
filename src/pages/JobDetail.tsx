@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { COPDocument } from '../components/COPDocument'
+import { JSAForm } from '../components/JSAForm'
+
 
 type JobStatus = 'Active' | 'Completed' | 'Pending'
 
@@ -29,6 +31,8 @@ const statusColors: Record<string, { bg: string; color: string }> = {
   Pending:   { bg: '#fff8e1', color: '#f57f17' },
 }
 
+const STATUS_OPTIONS: JobStatus[] = ['Active', 'Completed', 'Pending']
+
 const S = 20
 
 export function JobDetail() {
@@ -40,6 +44,11 @@ export function JobDetail() {
   const [uploading, setUploading] = useState(false)
   const [label, setLabel] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ site_name: '', status: '', date: '' })
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     async function fetchData() {
@@ -112,6 +121,39 @@ export function JobDetail() {
     setUploading(false)
   }
 
+  function startEditing() {
+    if (!job) return
+    setEditForm({ site_name: job.site_name, status: job.status, date: job.date })
+    setIsEditing(true)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    const { error } = await supabase
+      .from('jobs')
+      .update(editForm)
+      .eq('id', id)
+    if (error) {
+      console.error(error)
+    } else {
+      setJob({ ...job!, ...editForm } as Job)
+      setIsEditing(false)
+    }
+    setSaving(false)
+  }
+
+  async function handleDelete() {
+    if (!window.confirm('Delete this job and all its photos?')) return
+    setDeleting(true)
+    const { error } = await supabase.from('jobs').delete().eq('id', id)
+    if (error) {
+      console.error(error)
+      setDeleting(false)
+      return
+    }
+    navigate('/jobs')
+  }
+
   if (loading) return <div style={{ padding: 40 }}>Loading...</div>
   if (!job) return <div style={{ padding: 40 }}>Job not found</div>
 
@@ -129,46 +171,118 @@ export function JobDetail() {
             display: 'flex', alignItems: 'center', gap: 6 }}>
           ← Back to Jobs
         </button>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-  <PDFDownloadLink
-    document={<COPDocument job={job} photos={photos} />}
-    fileName={`COP_${job.site_name.replace(/\s+/g, '_')}.pdf`}
-  >
-    {({ loading }) => (
-      <button style={{
-        backgroundColor: '#1565c0', color: '#fff', border: 'none',
-        borderRadius: 8, padding: '10px 20px', fontSize: 14,
-        cursor: loading ? 'wait' : 'pointer',
-        opacity: loading ? 0.7 : 1,
-      }}>
-        {loading ? 'Generating PDF...' : '⬇ Download COP'}
-      </button>
-    )}
-  </PDFDownloadLink>
-</div>
+        <JSAForm jobId={Number(id)} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <PDFDownloadLink
+            document={<COPDocument job={job} photos={photos} />}
+            fileName={`COP_${job.site_name.replace(/\s+/g, '_')}.pdf`}
+          >
+            {({ loading }) => (
+              <button style={{
+                backgroundColor: '#1565c0', color: '#fff', border: 'none',
+                borderRadius: 8, padding: '10px 20px', fontSize: 14,
+                cursor: loading ? 'wait' : 'pointer',
+                opacity: loading ? 0.7 : 1,
+              }}>
+                {loading ? 'Generating PDF...' : '⬇ Download COP'}
+              </button>
+            )}
+          </PDFDownloadLink>
+        </div>
         <div style={{ backgroundColor: '#fff', borderRadius: 10,
           padding: `24px ${S}px`, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
           marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between',
-            alignItems: 'flex-start', marginBottom: 16 }}>
-            <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#1a1a1a' }}>
-              {job.site_name}
-            </h1>
-            <span style={{ fontSize: 13, fontWeight: 500, padding: '4px 12px',
-              borderRadius: 20, backgroundColor: badge.bg, color: badge.color,
-              whiteSpace: 'nowrap' }}>
-              {job.status}
-            </span>
+            alignItems: 'flex-start', marginBottom: 16, gap: 12 }}>
+            {isEditing ? (
+              <input
+                value={editForm.site_name}
+                onChange={e => setEditForm({ ...editForm, site_name: e.target.value })}
+                style={{ flex: 1, fontSize: 18, fontWeight: 600, color: '#1a1a1a',
+                  padding: '6px 10px', borderRadius: 6, border: '1px solid #e0e0e0' }}
+              />
+            ) : (
+              <h1 style={{ margin: 0, fontSize: 22, fontWeight: 600, color: '#1a1a1a' }}>
+                {job.site_name}
+              </h1>
+            )}
+
+            {isEditing ? (
+              <select
+                value={editForm.status}
+                onChange={e => setEditForm({ ...editForm, status: e.target.value })}
+                style={{ fontSize: 13, padding: '4px 8px', borderRadius: 20,
+                  border: '1px solid #e0e0e0' }}
+              >
+                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            ) : (
+              <span style={{ fontSize: 13, fontWeight: 500, padding: '4px 12px',
+                borderRadius: 20, backgroundColor: badge.bg, color: badge.color,
+                whiteSpace: 'nowrap' }}>
+                {job.status}
+              </span>
+            )}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <span style={{ fontSize: 13, color: '#888', width: 60 }}>Date</span>
-              <span style={{ fontSize: 13, color: '#1a1a1a' }}>{job.date}</span>
+              {isEditing ? (
+                <input
+                  type="date"
+                  value={editForm.date}
+                  onChange={e => setEditForm({ ...editForm, date: e.target.value })}
+                  style={{ fontSize: 13, padding: '4px 8px', borderRadius: 6,
+                    border: '1px solid #e0e0e0' }}
+                />
+              ) : (
+                <span style={{ fontSize: 13, color: '#1a1a1a' }}>{job.date}</span>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <span style={{ fontSize: 13, color: '#888', width: 60 }}>Job ID</span>
               <span style={{ fontSize: 13, color: '#1a1a1a' }}>#{job.id}</span>
             </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            {isEditing ? (
+              <>
+                <button onClick={handleSave} disabled={saving}
+                  style={{
+                    backgroundColor: '#1565c0', color: '#fff', border: 'none',
+                    borderRadius: 8, padding: '8px 16px', fontSize: 13,
+                    cursor: saving ? 'wait' : 'pointer', opacity: saving ? 0.7 : 1,
+                  }}>
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+                <button onClick={() => setIsEditing(false)} disabled={saving}
+                  style={{
+                    backgroundColor: '#fff', color: '#e94b4b', border: '1px solid #e0e0e0',
+                    borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer',
+                  }}>
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={startEditing}
+                  style={{
+                    backgroundColor: '#fff', color: '#1565c0', border: '1px solid #1565c0',
+                    borderRadius: 8, padding: '8px 16px', fontSize: 13, cursor: 'pointer',
+                  }}>
+                  Edit
+                </button>
+                <button onClick={handleDelete} disabled={deleting}
+                  style={{
+                    backgroundColor: '#fff', color: '#c62828', border: '1px solid #c62828',
+                    borderRadius: 8, padding: '8px 16px', fontSize: 13,
+                    cursor: deleting ? 'wait' : 'pointer', opacity: deleting ? 0.7 : 1,
+                  }}>
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -216,7 +330,7 @@ export function JobDetail() {
                     alt={photo.label}
                     style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }}
                   />
-                  <div style={{ padding: '8px 10px', fontSize: 12, color: '#666' }}>
+                  <div style={{ padding: '8px 10px', fontSize: 12, color: '#030303' }}>
                     <div style={{ fontWeight: 500, marginBottom: 2 }}>{photo.label}</div>
                     {photo.taken_at && (
                       <div>{new Date(photo.taken_at).toLocaleString()}</div>
