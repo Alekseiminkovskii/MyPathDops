@@ -4,6 +4,7 @@ import { supabase } from '../supabaseClient'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { COPDocument } from '../components/COPDocument'
 import { JSAForm } from '../components/JSAForm'
+import { useRole } from '../hooks/useRole'
 
 type JobStatus = 'Active' | 'Completed' | 'Pending'
 type QcStatus  = 'pending' | 'approved' | 'rejected'
@@ -52,7 +53,8 @@ export function JobDetail() {
   const [uploading, setUploading] = useState(false)
   const [label, setLabel]         = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
-
+  
+  const { role } = useRole()
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm]   = useState({ site_name: '', status: '', date: '' })
   const [saving, setSaving]       = useState(false)
@@ -255,6 +257,7 @@ export function JobDetail() {
               <span style={{ fontSize: 13, color: '#1a1a1a' }}>#{job.id}</span>
             </div>
           </div>
+          {(role === 'pm' || role === 'safety_manager') && (
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
             {isEditing ? (
               <>
@@ -286,6 +289,7 @@ export function JobDetail() {
               </>
             )}
           </div>
+          )}
         </div>
 
         {/* Photos + QC */}
@@ -307,7 +311,7 @@ export function JobDetail() {
           </div>
 
           {/* QC Progress Panel */}
-          {photos.length > 0 && (
+          {photos.length > 0 && role === 'pm' && (
             <div style={{ marginBottom: 20, padding: 16, backgroundColor: '#f9f9f9',
               borderRadius: 8, border: '1px solid #e0e0e0' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -387,7 +391,7 @@ export function JobDetail() {
                       )}
 
                       {/* QC actions */}
-                      {!job.qc_finalized && (
+                      {role === 'pm' && !job.qc_finalized && (
                         <div style={{ marginTop: 8 }}>
                           <input
                             placeholder="Rejection reason..."

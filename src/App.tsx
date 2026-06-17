@@ -6,6 +6,7 @@ import { JobsList } from './pages/JobsList'
 import type { Session } from '@supabase/supabase-js'
 import { JobDetail } from './pages/JobDetail'
 import { Certifications } from './pages/Certifications'
+import { Users } from './pages/Users'
 
 function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -42,6 +43,9 @@ function App() {
       } />
       <Route path="/certifications" element={
   session ? <Certifications /> : <Navigate to="/login" />
+} />
+<Route path="/users" element={
+  session ? <Users /> : <Navigate to="/login" />
 } />
     </Routes>
   )

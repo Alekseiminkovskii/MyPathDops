@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { useRole } from '../hooks/useRole'
 
 type JobStatus = 'Active' | 'Completed' | 'Pending'
 
@@ -21,12 +22,13 @@ const emptyForm = { site_name: '', status: 'Active', date: '' }
 const S = 20
 
 export function JobsList() {
-  const [jobs, setJobs] = useState<Job[]>([])
+  const [jobs, setJobs]       = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState(emptyForm)
-  const [saving, setSaving] = useState(false)
-  const navigate = useNavigate()
+  const [form, setForm]         = useState(emptyForm)
+  const [saving, setSaving]     = useState(false)
+  const navigate  = useNavigate()
+  const { role }  = useRole()
 
   useEffect(() => { fetchJobs() }, [])
 
@@ -42,11 +44,7 @@ export function JobsList() {
     setSaving(true)
     const { error } = await supabase.from('jobs').insert([form])
     if (error) console.error(error)
-    else {
-      setForm(emptyForm)
-      setShowForm(false)
-      fetchJobs()
-    }
+    else { setForm(emptyForm); setShowForm(false); fetchJobs() }
     setSaving(false)
   }
 
@@ -54,32 +52,42 @@ export function JobsList() {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5',
-      fontFamily: 'system-ui, sans-serif', padding: `40px ${S}px`,
-      textAlign: 'left' }}>
+      fontFamily: 'system-ui, sans-serif', padding: `40px ${S}px`, textAlign: 'left' }}>
       <div style={{ maxWidth: 640, margin: '0 auto' }}>
+
         <div style={{ display: 'flex', justifyContent: 'space-between',
           alignItems: 'center', marginBottom: 8 }}>
           <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, color: '#1a1a1a' }}>
             Jobs
           </h1>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={() => setShowForm(!showForm)}
-              style={{ backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
-                borderRadius: 8, padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
-              {showForm ? 'Cancel' : '+ Add Job'}
+            {role === 'pm' && (
+              <button onClick={() => setShowForm(!showForm)}
+                style={{ backgroundColor: '#1a1a1a', color: '#fff', border: 'none',
+                  borderRadius: 8, padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
+                {showForm ? 'Cancel' : '+ Add Job'}
+              </button>
+            )}
+            <button onClick={() => navigate('/certifications')}
+              style={{ backgroundColor: 'transparent', color: '#888',
+                border: '1px solid #e0e0e0', borderRadius: 8,
+                padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
+              Certifications
             </button>
+            {role === 'pm' && (
+              <button onClick={() => navigate('/users')}
+                style={{ backgroundColor: 'transparent', color: '#888',
+                  border: '1px solid #e0e0e0', borderRadius: 8,
+                  padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
+                Team
+              </button>
+            )}
             <button onClick={() => supabase.auth.signOut()}
               style={{ backgroundColor: 'transparent', color: '#888',
                 border: '1px solid #e0e0e0', borderRadius: 8,
                 padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
               Sign out
             </button>
-            <button onClick={() => navigate('/certifications')}
-  style={{ backgroundColor: 'transparent', color: '#888',
-    border: '1px solid #e0e0e0', borderRadius: 8,
-    padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
-  Certifications
-</button>
           </div>
         </div>
 
@@ -87,7 +95,7 @@ export function JobsList() {
           {jobs.length} sites in queue
         </p>
 
-        {showForm && (
+        {showForm && role === 'pm' && (
           <div style={{ backgroundColor: '#fff', borderRadius: 10,
             padding: `16px ${S}px`, marginBottom: 16,
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
@@ -120,11 +128,10 @@ export function JobsList() {
 
         <ul style={{ listStyle: 'none', margin: 0, padding: 0,
           display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {jobs.map((job) => {
+          {jobs.map(job => {
             const badge = statusColors[job.status] ?? { bg: '#f0f0f0', color: '#666' }
             return (
-              <li key={job.id}
-                onClick={() => navigate(`/jobs/${job.id}`)}
+              <li key={job.id} onClick={() => navigate(`/jobs/${job.id}`)}
                 style={{ backgroundColor: '#fff', borderRadius: 10,
                   padding: `16px ${S}px`, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
                   display: 'flex', alignItems: 'center',
@@ -144,6 +151,7 @@ export function JobsList() {
             )
           })}
         </ul>
+
       </div>
     </div>
   )
