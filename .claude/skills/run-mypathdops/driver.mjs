@@ -81,6 +81,25 @@ for (const line of lines) {
       case 'sleep':
         await page.waitForTimeout(Number(rest))
         break
+      case 'draw': {
+        const box = await page.locator(rest).first().boundingBox()
+        if (!box) throw new Error(`no bounding box for ${rest}`)
+        const cx = box.x + box.width / 2
+        const cy = box.y + box.height / 2
+        await page.mouse.move(cx - box.width / 3, cy)
+        await page.mouse.down()
+        await page.mouse.move(cx, cy - box.height / 3, { steps: 5 })
+        await page.mouse.move(cx + box.width / 3, cy + box.height / 3, { steps: 5 })
+        await page.mouse.up()
+        break
+      }
+      case 'geo': {
+        const [latStr, lngStr] = splitArgs(rest)
+        const origin = new URL(page.url()).origin
+        await page.context().grantPermissions(['geolocation'], { origin })
+        await page.context().setGeolocation({ latitude: parseFloat(latStr), longitude: parseFloat(lngStr) })
+        break
+      }
       case 'screenshot': {
         const file = path.join(outDir, `${String(++shotIndex).padStart(2, '0')}-${rest || 'shot'}.png`)
         await page.screenshot({ path: file, fullPage: true })

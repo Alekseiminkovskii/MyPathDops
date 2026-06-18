@@ -69,6 +69,7 @@ line at the end of the run — check it before declaring success.
 | `fill <css> <value>` | fill an input (goes through Playwright's input pipeline, fires React's onChange) |
 | `press <key>` | keyboard key press, e.g. `Enter` |
 | `sleep <ms>` | fixed wait, use only when there's no element to wait for (e.g. waiting out a network round trip with no DOM marker) |
+| `geo <lat> <lng>` | grant geolocation permission for the current page's origin and set the mocked position — headless Chromium denies `navigator.geolocation` by default, so any flow that calls it (photo upload GPS tag, SPA "Refresh Conditions") needs this first |
 | `screenshot [label]` | full-page screenshot, saved as `NN-label.png` |
 
 **There is no session persistence between runs.** Each `node driver.mjs`

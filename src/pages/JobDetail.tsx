@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { COPDocument } from '../components/COPDocument'
-import { JSAForm } from '../components/JSAForm'
 import { useRole } from '../hooks/useRole'
 
 type JobStatus = 'Active' | 'Completed' | 'Pending'
@@ -187,7 +186,13 @@ export function JobDetail() {
           ← Back to Jobs
         </button>
 
-        <JSAForm jobId={Number(id)} />
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <button onClick={() => navigate(`/jobs/${id}/jsa`)} style={{
+            backgroundColor: '#fff', color: '#1a1a1a', border: '1px solid #1a1a1a',
+            borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer' }}>
+            Job Safety Analysis (JSA)
+          </button>
+        </div>
 
         {/* COP — locked until QC finalized */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
