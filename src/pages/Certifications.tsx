@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
+import { ImageZoomModal } from '../components/ImageZoomModal'
 
 interface Cert {
   id: number
@@ -296,16 +297,8 @@ export function Certifications() {
         )}
       </div>
 
-      {/* Lightbox */}
       {viewScan && (
-        <div onClick={() => setViewScan(null)}
-          style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            zIndex: 1000, cursor: 'pointer' }}>
-          <img src={viewScan} alt="cert scan"
-            style={{ maxWidth: '90vw', maxHeight: '90vh',
-              objectFit: 'contain', borderRadius: 8 }} />
-        </div>
+        <ImageZoomModal src={viewScan} alt="cert scan" onClose={() => setViewScan(null)} />
       )}
     </div>
   )

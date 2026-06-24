@@ -93,6 +93,14 @@ for (const line of lines) {
         await page.mouse.up()
         break
       }
+      case 'dblclick':
+        await page.dblclick(rest)
+        break
+      case 'upload': {
+        const args = splitArgs(rest)
+        await page.locator(args[0]).setInputFiles(args[1])
+        break
+      }
       case 'geo': {
         const [latStr, lngStr] = splitArgs(rest)
         const origin = new URL(page.url()).origin

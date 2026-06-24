@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { PDFDownloadLink } from '@react-pdf/renderer'
 import { COPDocument } from '../components/COPDocument'
+import { ImageZoomModal } from '../components/ImageZoomModal'
 import { useRole } from '../hooks/useRole'
 
 type JobStatus = 'Active' | 'Completed' | 'Pending'
@@ -51,6 +52,7 @@ export function JobDetail() {
   const [loading, setLoading]     = useState(true)
   const [uploading, setUploading] = useState(false)
   const [label, setLabel]         = useState('')
+  const [zoomPhoto, setZoomPhoto] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   
   const { role } = useRole()
@@ -369,7 +371,8 @@ export function JobDetail() {
                   <div key={photo.id} style={{ borderRadius: 8, overflow: 'hidden',
                     border: `1px solid ${qc.border}` }}>
                     <img src={photo.url} alt={photo.label}
-                      style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+                      onClick={() => setZoomPhoto(photo.url)}
+                      style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block', cursor: 'zoom-in' }} />
                     <div style={{ padding: '8px 10px', fontSize: 12, color: '#030303' }}>
                       <div style={{ fontWeight: 500, marginBottom: 2 }}>{photo.label}</div>
                       {photo.taken_at && <div>{new Date(photo.taken_at).toLocaleString()}</div>}
@@ -435,6 +438,10 @@ export function JobDetail() {
         </div>
 
       </div>
+
+      {zoomPhoto && (
+        <ImageZoomModal src={zoomPhoto} alt="job site photo" onClose={() => setZoomPhoto(null)} />
+      )}
     </div>
   )
 }
