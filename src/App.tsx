@@ -6,6 +6,8 @@ import { JobsList } from './pages/JobsList'
 import type { Session } from '@supabase/supabase-js'
 import { JobDetail } from './pages/JobDetail'
 import { Certifications } from './pages/Certifications'
+import { TeamCertifications } from './pages/TeamCertifications'
+import { TechCertifications } from './pages/TechCertifications'
 import { Users } from './pages/Users'
 import { JSAPage } from './pages/JSAPage'
 
@@ -46,11 +48,17 @@ function App() {
         session ? <JSAPage /> : <Navigate to="/login" />
       } />
       <Route path="/certifications" element={
-  session ? <Certifications /> : <Navigate to="/login" />
-} />
-<Route path="/users" element={
-  session ? <Users /> : <Navigate to="/login" />
-} />
+        session ? <Certifications /> : <Navigate to="/login" />
+      } />
+      <Route path="/team-certifications" element={
+        session ? <TeamCertifications /> : <Navigate to="/login" />
+      } />
+      <Route path="/certifications/:userId" element={
+        session ? <TechCertifications /> : <Navigate to="/login" />
+      } />
+      <Route path="/users" element={
+        session ? <Users /> : <Navigate to="/login" />
+      } />
     </Routes>
   )
 }

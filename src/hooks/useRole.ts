@@ -5,12 +5,14 @@ export type Role = 'pm' | 'safety_manager' | 'tech' | null
 
 export function useRole() {
   const [role, setRole]       = useState<Role>(null)
+  const [userId, setUserId]   = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchRole() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { setLoading(false); return }
+      setUserId(user.id)
 
       const { data } = await supabase
         .from('profiles')
@@ -24,5 +26,5 @@ export function useRole() {
     fetchRole()
   }, [])
 
-  return { role, loading }
+  return { role, userId, loading }
 }

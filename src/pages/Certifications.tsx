@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabaseClient'
 import { ImageZoomModal } from '../components/ImageZoomModal'
+import { useRole } from '../hooks/useRole'
 
 interface Cert {
   id: number
@@ -83,6 +84,7 @@ const emptyForm = { name: '', cert_type: CERT_TYPES[0], issued_at: '', expires_a
 
 export function Certifications() {
   const navigate = useNavigate()
+  const { role, userId, loading: roleLoading } = useRole()
   const [certs, setCerts] = useState<Cert[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -92,13 +94,32 @@ export function Certifications() {
   const [viewScan, setViewScan] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { fetchCerts() }, [])
+  useEffect(() => {
+    if (roleLoading) return
+    let ignore = false
+    async function load() {
+      let query = supabase
+        .from('certifications')
+        .select('*')
+        .order('expires_at', { ascending: true })
+      if (userId) query = query.eq('user_id', userId)
+      const { data } = await query
+      if (!ignore) {
+        if (data) setCerts(data as Cert[])
+        setLoading(false)
+      }
+    }
+    load()
+    return () => { ignore = true }
+  }, [roleLoading, role, userId])
 
   async function fetchCerts() {
-    const { data } = await supabase
+    let query = supabase
       .from('certifications')
       .select('*')
       .order('expires_at', { ascending: true })
+    if (userId) query = query.eq('user_id', userId)
+    const { data } = await query
     if (data) setCerts(data as Cert[])
     setLoading(false)
   }
@@ -131,6 +152,7 @@ export function Certifications() {
       issued_at: form.issued_at || null,
       expires_at: form.expires_at,
       scan_url,
+      user_id: userId,
     }])
 
     setForm(emptyForm)

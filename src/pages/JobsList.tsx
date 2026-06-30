@@ -74,6 +74,14 @@ export function JobsList() {
                 padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
               Certifications
             </button>
+            {(role === 'pm' || role === 'safety_manager') && (
+              <button onClick={() => navigate('/team-certifications')}
+                style={{ backgroundColor: 'transparent', color: '#888',
+                  border: '1px solid #e0e0e0', borderRadius: 8,
+                  padding: '8px 16px', fontSize: 14, cursor: 'pointer' }}>
+                Team Certs
+              </button>
+            )}
             {role === 'pm' && (
               <button onClick={() => navigate('/users')}
                 style={{ backgroundColor: 'transparent', color: '#888',
