@@ -91,6 +91,7 @@ export function Certifications() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [extracting, setExtracting] = useState(false)
   const [viewScan, setViewScan] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -122,6 +123,43 @@ export function Certifications() {
     const { data } = await query
     if (data) setCerts(data as Cert[])
     setLoading(false)
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+    setExtracting(true)
+    try {
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve((reader.result as string).split(',')[1])
+        reader.readAsDataURL(file)
+      })
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-cert-info`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({ imageBase64: base64, mediaType: file.type }),
+        }
+      )
+      const info = await res.json()
+      setForm(prev => ({
+        ...prev,
+        name:       info.holder_name  ?? prev.name,
+        cert_type:  info.cert_type    ?? prev.cert_type,
+        issued_at:  info.issued_at    ?? prev.issued_at,
+        expires_at: info.expires_at   ?? prev.expires_at,
+      }))
+    } catch (err) {
+      console.error('extract-cert-info failed', err)
+    } finally {
+      setExtracting(false)
+    }
   }
 
   async function handleAdd() {
@@ -261,11 +299,17 @@ export function Certifications() {
               <div>
                 <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>
                   Certificate scan / photo (optional)
+                  {extracting && (
+                    <span style={{ marginLeft: 8, color: '#1565c0', fontStyle: 'italic' }}>
+                      Reading certificate...
+                    </span>
+                  )}
                 </div>
                 <input
                   ref={fileRef}
                   type="file"
                   accept="image/*,.pdf"
+                  onChange={handleFileChange}
                   style={{ padding: '10px 14px', borderRadius: 8,
                     border: '1px solid #e0e0e0', fontSize: 14,
                     width: '100%', boxSizing: 'border-box',
